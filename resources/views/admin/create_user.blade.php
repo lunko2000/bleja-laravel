@@ -1,49 +1,58 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-2xl mx-auto mt-10 p-6 bg-white shadow-md rounded-md">
-    <h2 class="text-2xl font-bold mb-4">Add a New User</h2>
+<div class="max-w-lg mx-auto mt-10 p-6 bg-gray-800 text-white shadow-lg rounded-lg">
+    <h2 class="text-2xl font-bold mb-4 text-center">➕ Add a New User</h2>
 
     <!-- Success Message -->
     @if (session('success'))
-        <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+        <div class="mb-4 p-4 bg-green-600 text-white rounded-md text-center">
             ✅ {{ session('success') }}
         </div>
     @endif
-    
-    <form method="POST" action="{{ route('admin.users.store') }}">
+
+    <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-4">
         @csrf
 
         <!-- Name -->
-        <div class="mb-4">
-            <label for="name" class="block font-medium text-sm text-gray-700">Full Name</label>
-            <input type="text" name="name" id="name" class="block w-full mt-1 rounded-md shadow-sm border-gray-300" required>
+        <div>
+            <label for="name" class="block text-sm font-medium text-gray-300">Full Name</label>
+            <input type="text" name="name" id="name" 
+                   class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" 
+                   required>
         </div>
 
         <!-- Username -->
-        <div class="mb-4">
-            <label for="username" class="block font-medium text-sm text-gray-700">Username</label>
-            <input type="text" name="username" id="username" class="block w-full mt-1 rounded-md shadow-sm border-gray-300" required>
+        <div>
+            <label for="username" class="block text-sm font-medium text-gray-300">Username</label>
+            <input type="text" name="username" id="username" 
+                   class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" 
+                   required>
         </div>
 
         <!-- Role Selection -->
-        <div class="mb-4">
-            <label for="role" class="block font-medium text-sm text-gray-700">Role</label>
-            <select name="role" id="role" class="block w-full mt-1 rounded-md shadow-sm border-gray-300" required>
+        <div>
+            <label for="role" class="block text-sm font-medium text-gray-300">Role</label>
+            <select name="role" id="role" 
+                    class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" 
+                    required>
                 <option value="player">Player</option>
                 <option value="admin">Admin</option>
             </select>
         </div>
 
         <!-- Password -->
-        <div class="mb-4">
-            <label for="password" class="block font-medium text-sm text-gray-700">Password</label>
-            <input type="password" name="password" id="password" class="block w-full mt-1 rounded-md shadow-sm border-gray-300" required>
+        <div>
+            <label for="password" class="block text-sm font-medium text-gray-300">Password</label>
+            <input type="password" name="password" id="password" 
+                   class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500" 
+                   required>
         </div>
 
         <!-- Submit Button -->
-        <div class="flex justify-end">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <div class="flex justify-center mt-6">
+            <button type="submit" 
+                    class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg transition">
                 ➕ Add User
             </button>
         </div>

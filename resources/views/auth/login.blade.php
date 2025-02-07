@@ -1,64 +1,70 @@
 <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    <div class="flex items-center justify-center min-h-screen bg-gray-900">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-md w-full sm:max-w-md">
+            <h2 class="text-center text-white text-3xl font-bold">BLEJA</h2>
+            <p class="text-center text-gray-400 mb-6">Login to your account</p>
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+            <!-- Session Status -->
+            <x-auth-session-status class="mb-4" :status="session('status')" />
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="username" :value="__('Username')" />
-            <x-text-input id="username" class="block mt-1 w-full" type="text" name="username" :value="old('username')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('username')" class="mt-2" />
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                <!-- Username -->
+                <div>
+                    <x-input-label for="username" :value="__('Username')" class="text-gray-300" />
+                    <x-text-input id="username" class="block mt-1 w-full bg-gray-700 text-white border-gray-600" type="text" name="username" :value="old('username')" required autofocus autocomplete="username" />
+                    <x-input-error :messages="$errors->get('username')" class="mt-2 text-red-400" />
+                </div>
+
+                <!-- Password -->
+                <div class="mt-4">
+                    <x-input-label for="password" :value="__('Password')" class="text-gray-300" />
+                    
+                    <div class="relative">
+                        <x-text-input id="password" class="block w-full bg-gray-700 text-white border-gray-600 pr-10" type="password" name="password" required autocomplete="current-password" />
+                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                            <span id="eyeIcon">👁️</span>
+                        </button>
+                    </div>
+
+                    <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-400" />
+                </div>
+
+                <!-- Remember Me -->
+                <div class="block mt-4">
+                    <label for="remember_me" class="inline-flex items-center">
+                        <input id="remember_me" type="checkbox" class="rounded bg-gray-700 border-gray-600 text-indigo-500 focus:ring-indigo-400" name="remember">
+                        <span class="ms-2 text-sm text-gray-400">{{ __('Remember me') }}</span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between mt-4">
+                    @if (Route::has('password.request'))
+                        <a class="text-sm text-indigo-400 hover:underline" href="{{ route('password.request') }}">
+                            {{ __('Forgot password?') }}
+                        </a>
+                    @endif
+
+                    <x-primary-button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded">
+                        {{ __('Log In') }}
+                    </x-primary-button>
+                </div>
+            </form>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            
-            <div class="flex rounded-md shadow-sm">
-                <x-text-input id="password" class="flex-1 rounded-l-md border-r-0"
-                    type="password"
-                    name="password"
-                    required autocomplete="current-password" />
-                
-                <button type="button" onclick="togglePassword()" 
-                    class="bg-gray-300 px-4 py-2 border border-gray-400 rounded-r-md">
-                    👁️
-                </button>
-            </div>
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-
-
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
+    </div>
 </x-guest-layout>
 
 <script>
 function togglePassword() {
     var passwordField = document.getElementById("password");
-    passwordField.type = passwordField.type === "password" ? "text" : "password";
+    var eyeIcon = document.getElementById("eyeIcon");
+    if (passwordField.type === "password") {
+        passwordField.type = "text";
+        eyeIcon.textContent = "🙈";
+    } else {
+        passwordField.type = "password";
+        eyeIcon.textContent = "👁️";
+    }
 }
 </script>

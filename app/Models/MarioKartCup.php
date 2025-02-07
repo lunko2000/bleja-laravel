@@ -9,6 +9,5 @@ class MarioKartCup extends Model
     protected $fillable = [
         'id',
         'name',
-
     ];
 }
