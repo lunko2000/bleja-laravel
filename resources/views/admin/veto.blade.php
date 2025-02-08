@@ -77,12 +77,18 @@
         @endif
 
         <!-- Start the Match Button (Only enabled when veto process is complete) -->
+        @php
+            $bo1Ready = $matchSetup['format'] === 'bo1' && count($vetoHistory) === 7;
+            $bo3Ready = $matchSetup['format'] === 'bo3' && count(array_filter($vetoHistory, fn($v) => $v['type'] === 'pick' || $v['type'] === 'decider')) === 3;
+            $isReady = $bo1Ready || $bo3Ready;
+        @endphp
+
         <form method="POST" action="{{ route('admin.matches.start') }}">
             @csrf
             <button type="submit" 
                     class="w-full mt-4 font-bold py-3 px-6 rounded-lg transition
-                    {{ count(array_filter($vetoHistory, fn($v) => $v['type'] === 'pick' || $v['type'] === 'decider')) === 3 ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-gray-500 text-gray-300 cursor-not-allowed' }}"
-                    {{ count(array_filter($vetoHistory, fn($v) => $v['type'] === 'pick' || $v['type'] === 'decider')) === 3 ? '' : 'disabled' }}>
+                    {{ $isReady ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-gray-500 text-gray-300 cursor-not-allowed' }}"
+                    {{ $isReady ? '' : 'disabled' }}>
                 🏁 Start the Match
             </button>
         </form>

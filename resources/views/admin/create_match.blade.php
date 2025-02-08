@@ -15,9 +15,11 @@
                 <select name="player1" id="player1" required 
                         class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md">
                     <option value="">-- Choose a Player --</option>
-                    @foreach ($players as $player)
-                        <option value="{{ $player->id }}">{{ $player->username }}</option>
-                    @endforeach
+                        @foreach ($players as $player)
+                            @if ($player->id !== auth()->id()) 
+                                <option value="{{ $player->id }}">{{ $player->username }}</option>
+                            @endif
+                        @endforeach
                 </select>
             </div>
 
@@ -52,3 +54,20 @@
     </div>
 </div>
 @endsection
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const player1 = document.getElementById("player1");
+    const player2 = document.getElementById("player2");
+
+    function updatePlayer2Options() {
+        const selectedPlayer1 = player1.value;
+        for (let option of player2.options) {
+            option.disabled = option.value === selectedPlayer1 && option.value !== "";
+        }
+    }
+
+    player1.addEventListener("change", updatePlayer2Options);
+    player2.addEventListener("change", updatePlayer2Options);
+});
+</script>

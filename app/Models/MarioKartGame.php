@@ -14,16 +14,17 @@ class MarioKartGame extends Model
         'player2',
         'created_by',
         'format',
+        'status', // 'pending', 'vetoing', 'active', 'completed'
         'winner_id', // Nullable, will be filled when match is completed
     ];
 
-    // Relationships
-    public function player1()
+    // ✅ Use meaningful relationship method names to avoid conflicts
+    public function playerOne()
     {
         return $this->belongsTo(User::class, 'player1');
     }
 
-    public function player2()
+    public function playerTwo()
     {
         return $this->belongsTo(User::class, 'player2');
     }
@@ -41,5 +42,10 @@ class MarioKartGame extends Model
     public function cups()
     {
         return $this->hasMany(MarioKartGameCup::class, 'game_id');
+    }
+
+    public function races()
+    {
+        return $this->hasMany(MarioKartGameRace::class, 'game_id');
     }
 }

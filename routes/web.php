@@ -21,14 +21,15 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/admin/role-choice', [AdminRoleController::class, 'showRoleChoice'])->name('admin.role_choice');
     Route::post('/admin/choose-role', [AdminRoleController::class, 'chooseRole'])->name('admin.choose_role');
+    
+    // User Management
     Route::get('/admin/users/create', [UserManagementController::class, 'create'])->name('admin.users.create');
     Route::post('/admin/users/store', [UserManagementController::class, 'store'])->name('admin.users.store');
 
-    // Dashboards (Now Protected with 'auth' Middleware)
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+    // Admin Dashboard (Displays Current Match)
+    Route::get('/admin/dashboard', [MarioKartGameController::class, 'dashboard'])->name('admin.dashboard');
 
+    // Player Dashboard
     Route::get('/player/dashboard', function () {
         return view('player.dashboard');
     })->name('player.dashboard');
@@ -37,12 +38,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/matches/create', [MarioKartGameController::class, 'create'])->name('admin.matches.create');
     Route::post('/admin/matches/store', [MarioKartGameController::class, 'store'])->name('admin.matches.store');
 
-    // Cup Veto Routes
+    // Cup Veto Process
     Route::get('/admin/matches/veto', [MarioKartGameController::class, 'veto'])->name('admin.matches.veto');
     Route::post('/admin/matches/veto/process', [MarioKartGameController::class, 'processVeto'])->name('admin.matches.veto.process');
     
-    // ✅ Add the new "Start Match" route here
+    // ✅ Start Match Route (After veto completion)
     Route::post('/admin/matches/start', [MarioKartGameController::class, 'startMatch'])->name('admin.matches.start');
+
+    // ✅ View Ongoing Match Page (Shows races & tracks)
+    Route::get('/admin/match/{game}', [MarioKartGameController::class, 'showMatch'])->name('admin.match.show');
+
+    // ✅ Process Race Results (Stores placements & moves to next race)
+    Route::post('/admin/match/{game}/race/{race}', [MarioKartGameController::class, 'submitRaceResults'])->name('admin.match.race.submit');
+
+    // ✅ Determine Match Winner
+    Route::get('/admin/matches/result/{game}', [MarioKartGameController::class, 'determineWinner'])->name('admin.matches.result');
+    Route::post('/admin/matches/result/{game}', [MarioKartGameController::class, 'submitWinner'])->name('admin.matches.submit');
 
     // Profile Routes (Users can update username & password)
     Route::get('/profile', [UserController::class, 'edit'])->name('profile.edit');
