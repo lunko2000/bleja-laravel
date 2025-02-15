@@ -51,6 +51,7 @@ class MarioKartGameController extends Controller
                 session(['veto_history' => [[
                     'cup_id' => $randomCup->id,
                     'cup_name' => $randomCup->name,
+                    'cup_logo' => $randomCup->cup_logo,
                     'type' => 'auto-ban',
                 ]]]);
             }
@@ -134,10 +135,16 @@ class MarioKartGameController extends Controller
             return redirect()->back()->with('error', 'Invalid cup selection.');
         }
 
+        $playerTurnId = $currentStepIndex % 2 === 0 ? $matchSetup['player1'] : $matchSetup['player2'];
+        $playerTurn = User::find($playerTurnId)->username ?? "Unknown Player";
+
         $vetoHistory[] = [
             'cup_id' => $cup->id,
             'cup_name' => $cup->name,
+            'cup_logo' => $cup->cup_logo,
             'type' => $currentStep,
+            'player_name' => $playerTurn, // ✅ Store the player name!
+            'picked_by' => ($currentStep === 'pick') ? $playerTurnId : null,
         ];
 
         // ✅ Check if we are at the last ban before the decider
@@ -149,7 +156,10 @@ class MarioKartGameController extends Controller
                 $vetoHistory[] = [
                     'cup_id' => $deciderCup->id,
                     'cup_name' => $deciderCup->name,
+                    'cup_logo' => $deciderCup->cup_logo,
                     'type' => 'decider',
+                    'player_name' => $playerTurn, // ✅ Store the player name!
+                    'picked_by' => ($currentStep === 'pick') ? $playerTurnId : null,
                 ];
             }
         }
@@ -190,6 +200,7 @@ class MarioKartGameController extends Controller
                     'game_id' => $game->id,
                     'cup_id' => $veto['cup_id'],
                     'type' => $veto['type'],
+                    'picked_by' => ($veto['type'] === 'pick') ? User::where('username', $veto['player_name'])->value('id') : null,
                 ]);
             }
         }
@@ -204,6 +215,7 @@ class MarioKartGameController extends Controller
                     'game_id' => $game->id,
                     'cup_id' => $remainingCup->id,
                     'type' => 'decider', // Use "decider" since it's the last cup
+                    'picked_by' => null,
                 ]);
             }
         }
@@ -242,42 +254,51 @@ class MarioKartGameController extends Controller
 
     public function showMatch(MarioKartGame $game)
     {
-        // ✅ Eager-load winner, playerOne, and playerTwo relationships
         $game->load(['winner', 'playerOne', 'playerTwo']);
 
-        // ✅ If the game is completed, calculate and show final results
         if ($game->status === 'completed') {
             $totalPoints = [$game->player1 => 0, $game->player2 => 0];
             $points = [1 => 15, 2 => 12, 3 => 10, 4 => 8, 5 => 7, 6 => 6, 7 => 5, 8 => 4, 9 => 3, 10 => 2, 11 => 1, 12 => 0];
-
-            // ✅ Fetch all completed races
+        
             $completedRaces = $game->races()->whereNotNull('winner')->get();
             foreach ($completedRaces as $race) {
                 $placements = json_decode($race->placements, true);
                 $totalPoints[$game->player1] += $points[$placements[$game->player1]] ?? 0;
                 $totalPoints[$game->player2] += $points[$placements[$game->player2]] ?? 0;
             }
+        
+            // ✅ Add cup wins to the completed match view
+            $player1CupWins = $game->cups()->where('cup_winner', $game->player1)->count();
+            $player2CupWins = $game->cups()->where('cup_winner', $game->player2)->count();
+        
+            return view('admin.match', compact('game', 'totalPoints', 'player1CupWins', 'player2CupWins'));
+        }        
 
-            return view('admin.match', compact('game', 'totalPoints'));
-        }
+        // Count cup wins
+        $player1CupWins = $game->cups()->where('cup_winner', $game->player1)->count();
+        $player2CupWins = $game->cups()->where('cup_winner', $game->player2)->count();
 
-        // ✅ Fetch the current cup and the next race
-        $currentCup = $game->cups()->first();
-        $currentRace = $game->races()->whereNull('winner')->orderBy('race_number')->first();
+        // Fetch the first incomplete cup and its next race
+        $currentCup = $game->cups()
+        ->with(['cup', 'picker']) // ✅ Load related cup & pickedBy user
+        ->whereHas('races', function ($query) {
+            $query->whereNull('winner');
+        })
+        ->orderBy('id')
+        ->first();
 
-        // ✅ If no races remain, mark the game as completed and reload the page
+        $currentRace = $currentCup
+            ? $currentCup->races()->whereNull('winner')->orderBy('race_number')->first()
+            : null;
+
+        // If no races remain, mark the game as completed
         if (!$currentRace) {
             $game->status = 'completed';
             $game->save();
-            return redirect()->route('admin.match.show', $game->id);
+            $currentCup = null;
         }
 
-        // ✅ Retrieve selected placements
-        $placements = json_decode($currentRace->placements, true) ?? [];
-        $selectedPlayer1 = $placements[$game->player1] ?? null;
-        $selectedPlayer2 = $placements[$game->player2] ?? null;
-
-        return view('admin.match', compact('game', 'currentCup', 'currentRace', 'selectedPlayer1', 'selectedPlayer2'));
+        return view('admin.match', compact('game', 'currentCup', 'currentRace', 'player1CupWins', 'player2CupWins'));
     }
 
     public function submitRaceResults(Request $request, MarioKartGame $game, MarioKartGameRace $race)
@@ -290,44 +311,50 @@ class MarioKartGameController extends Controller
         // Define point system
         $points = [1 => 15, 2 => 12, 3 => 10, 4 => 8, 5 => 7, 6 => 6, 7 => 5, 8 => 4, 9 => 3, 10 => 2, 11 => 1, 12 => 0];
 
-        // Store the placements in JSON format
+        // Store placements
         $race->placements = json_encode([
             $game->player1 => $request->player1_placement,
             $game->player2 => $request->player2_placement,
         ]);
-        
-        // Determine winner of this race
         $race->winner = $request->player1_placement < $request->player2_placement ? $game->player1 : $game->player2;
         $race->save();
 
-        // Check if all 4 races in this cup are completed
-        $cup = $game->cups()->where('id', $race->cup_id)->first();
-        $completedRaces = $game->races()->where('cup_id', $cup->id)->whereNotNull('winner')->get();
+        // Check if all 4 races in the cup are completed
+        $cup = MarioKartGameCup::where('id', $race->cup_id)->first();
+        $completedRaces = MarioKartGameRace::where('cup_id', $cup->id)->whereNotNull('winner')->get();
 
         if ($completedRaces->count() === 4) {
-            // Calculate total points for each player
+            // Calculate total points for the cup
             $totalPoints = [$game->player1 => 0, $game->player2 => 0];
 
             foreach ($completedRaces as $completedRace) {
                 $placements = json_decode($completedRace->placements, true);
-                $totalPoints[$game->player1] += $points[$placements[$game->player1]];
-                $totalPoints[$game->player2] += $points[$placements[$game->player2]];
+                $totalPoints[$game->player1] += $points[$placements[$game->player1]] ?? 0;
+                $totalPoints[$game->player2] += $points[$placements[$game->player2]] ?? 0;
             }
 
-            // Determine cup winner
+            // Determine the cup winner
             $cupWinner = $totalPoints[$game->player1] > $totalPoints[$game->player2] ? $game->player1 : $game->player2;
             $cup->cup_winner = $cupWinner;
             $cup->save();
 
-            // ✅ Update mario_kart_games table (Game Winner + Status)
-            $game->winner_id = $cupWinner;
-            $game->status = 'completed';
-            $game->save();
+            // Count total cups won by each player
+            $player1CupWins = MarioKartGameCup::where('game_id', $game->id)->where('cup_winner', $game->player1)->count();
+            $player2CupWins = MarioKartGameCup::where('game_id', $game->id)->where('cup_winner', $game->player2)->count();
 
-            return redirect()->route('admin.match.show', $game->id)->with('success', 'Cup has been completed! Match is now finished.');
+            // End match if someone wins the required number of cups
+            if ($game->format === 'bo1' || $player1CupWins === 2 || $player2CupWins === 2) {
+                $game->winner_id = $game->format === 'bo1' 
+                    ? $cupWinner  // In BO1, the first cup winner is the match winner
+                    : ($player1CupWins === 2 ? $game->player1 : $game->player2); // In BO3, the first to win 2 cups
+
+                $game->status = 'completed';
+                $game->save();
+
+                return redirect()->route('admin.match.show', $game->id)->with('success', 'Match has been completed!');
+            }
         }
 
-        // Redirect to next race
         return redirect()->route('admin.match.show', $game->id)->with('success', 'Race results submitted!');
     }
 }
