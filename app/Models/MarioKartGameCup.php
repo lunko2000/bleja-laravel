@@ -14,6 +14,7 @@ class MarioKartGameCup extends Model
         'cup_id',
         'type', // 'ban', 'pick', or 'decider'
         'picked_by',
+        'cup_winner',
     ];
 
     // Relationship to MarioKartGame
@@ -37,5 +38,10 @@ class MarioKartGameCup extends Model
     public function picker()
     {
         return $this->belongsTo(User::class, 'picked_by');
+    }
+
+    public function winner()
+    {
+        return $this->belongsTo(User::class, 'cup_winner');
     }
 }

@@ -256,49 +256,82 @@ class MarioKartGameController extends Controller
     {
         $game->load(['winner', 'playerOne', 'playerTwo']);
 
+        $points = [1 => 15, 2 => 12, 3 => 10, 4 => 8, 5 => 7, 6 => 6, 7 => 5, 8 => 4, 9 => 3, 10 => 2, 11 => 1, 12 => 0];
+
+        // Initialize variables
+        $player1CurrentCupPoints = 0;
+        $player2CurrentCupPoints = 0;
+        $currentCup = null; // ✅ Ensure it's always set
+        $currentRace = null;
+
         if ($game->status === 'completed') {
             $totalPoints = [$game->player1 => 0, $game->player2 => 0];
-            $points = [1 => 15, 2 => 12, 3 => 10, 4 => 8, 5 => 7, 6 => 6, 7 => 5, 8 => 4, 9 => 3, 10 => 2, 11 => 1, 12 => 0];
-        
+
             $completedRaces = $game->races()->whereNotNull('winner')->get();
             foreach ($completedRaces as $race) {
                 $placements = json_decode($race->placements, true);
                 $totalPoints[$game->player1] += $points[$placements[$game->player1]] ?? 0;
                 $totalPoints[$game->player2] += $points[$placements[$game->player2]] ?? 0;
             }
-        
-            // ✅ Add cup wins to the completed match view
+
             $player1CupWins = $game->cups()->where('cup_winner', $game->player1)->count();
             $player2CupWins = $game->cups()->where('cup_winner', $game->player2)->count();
-        
-            return view('admin.match', compact('game', 'totalPoints', 'player1CupWins', 'player2CupWins'));
-        }        
+        } else {
+            $player1CupWins = $game->cups()->where('cup_winner', $game->player1)->count();
+            $player2CupWins = $game->cups()->where('cup_winner', $game->player2)->count();
 
-        // Count cup wins
-        $player1CupWins = $game->cups()->where('cup_winner', $game->player1)->count();
-        $player2CupWins = $game->cups()->where('cup_winner', $game->player2)->count();
+            $currentCup = $game->cups()
+                ->with(['cup', 'picker', 'races', 'winner'])
+                ->whereHas('races', fn($query) => $query->whereNull('winner'))
+                ->orderBy('id')
+                ->first();
 
-        // Fetch the first incomplete cup and its next race
-        $currentCup = $game->cups()
-        ->with(['cup', 'picker']) // ✅ Load related cup & pickedBy user
-        ->whereHas('races', function ($query) {
-            $query->whereNull('winner');
-        })
-        ->orderBy('id')
-        ->first();
+            $currentRace = $currentCup
+                ? $currentCup->races()->whereNull('winner')->orderBy('race_number')->first()
+                : null;
 
-        $currentRace = $currentCup
-            ? $currentCup->races()->whereNull('winner')->orderBy('race_number')->first()
-            : null;
+            if ($currentCup) {
+                $completedCupRaces = $currentCup->races()->whereNotNull('winner')->get();
+                foreach ($completedCupRaces as $race) {
+                    $placements = json_decode($race->placements, true);
+                    $player1CurrentCupPoints += $points[$placements[$game->player1]] ?? 0;
+                    $player2CurrentCupPoints += $points[$placements[$game->player2]] ?? 0;
+                }
+            }
 
-        // If no races remain, mark the game as completed
-        if (!$currentRace) {
-            $game->status = 'completed';
-            $game->save();
-            $currentCup = null;
+            if (!$currentRace) {
+                $game->status = 'completed';
+                $game->save();
+                $currentCup = null;
+            }
         }
 
-        return view('admin.match', compact('game', 'currentCup', 'currentRace', 'player1CupWins', 'player2CupWins'));
+        // ✅ Calculate and attach cup scores
+        $game->cups->each(function ($cup) use ($game, $points) {
+            $player1Score = 0;
+            $player2Score = 0;
+
+            $cupRaces = $cup->races()->whereNotNull('winner')->get();
+            foreach ($cupRaces as $race) {
+                $placements = json_decode($race->placements, true);
+                $player1Score += $points[$placements[$game->player1]] ?? 0;
+                $player2Score += $points[$placements[$game->player2]] ?? 0;
+            }
+
+            // Attach computed scores to each cup
+            $cup->player1_score = $player1Score;
+            $cup->player2_score = $player2Score;
+        });
+
+        return view('admin.match', compact(
+            'game',
+            'currentCup',  // ✅ Now it will always exist
+            'currentRace',
+            'player1CupWins',
+            'player2CupWins',
+            'player1CurrentCupPoints',
+            'player2CurrentCupPoints'
+        ));
     }
 
     public function submitRaceResults(Request $request, MarioKartGame $game, MarioKartGameRace $race)
