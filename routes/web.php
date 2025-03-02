@@ -58,6 +58,8 @@ Route::middleware('auth')->group(function () {
     // Profile Routes (Users can update username & password)
     Route::get('/profile', [UserController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
+
+    Route::get('/api/cups/{cup_id}/tracks', [MarioKartGameController::class, 'getTracksForCup']);
 });
 
 require __DIR__.'/auth.php';

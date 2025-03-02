@@ -69,6 +69,7 @@ class MarioKartGameController extends Controller
         $matchSetup = session('match_setup');
         $player1 = User::find($matchSetup['player1'])->username ?? "Unknown Player";
         $player2 = User::find($matchSetup['player2'])->username ?? "Unknown Player";
+        
         if (!$matchSetup) {
             return redirect()->route('admin.dashboard')->with('error', 'No match setup found.');
         }
@@ -92,13 +93,53 @@ class MarioKartGameController extends Controller
         $currentStep = $vetoSteps[$currentStepIndex] ?? null;
         $playerTurnId = $currentStepIndex % 2 === 0 ? $matchSetup['player1'] : $matchSetup['player2'];
         $playerTurn = User::find($playerTurnId)->username ?? "Unknown Player";
-        $currentStepMessage = $currentStep === 'pick'
-            ? "🎯 {$playerTurn} is picking a cup..."
-            : "🚫 {$playerTurn} is banning a cup...";
 
-        return view('admin.veto', compact('matchSetup', 'availableCups', 'vetoSteps', 'vetoHistory', 'currentStepMessage', 'player1', 'player2', 'remainingCup'));
+        // 🟢 NEW: Check if veto is completed
+        if ($currentStepIndex >= count($vetoSteps)) {
+            $currentStepMessage = "✅ Veto process is completed.";
+        } else {
+            $currentStepMessage = $currentStep === 'pick'
+                ? "🎯 {$playerTurn} is picking a cup..."
+                : "🚫 {$playerTurn} is banning a cup...";
+        }
+
+        return view('admin.veto', compact(
+            'matchSetup', 
+            'availableCups', 
+            'vetoSteps', 
+            'vetoHistory', 
+            'currentStepMessage', 
+            'player1', 
+            'player2', 
+            'remainingCup'
+        ));
     }
 
+    public function getTracksForCup($cup_id)
+    {
+        // Fetch the cup
+        $cup = MarioKartCup::find($cup_id);
+
+        if (!$cup) {
+            return response()->json(['error' => 'Cup not found'], 404);
+        }
+
+        // Fetch all tracks that belong to this cup with images
+        $tracks = MarioKartTrack::where('track_cup', $cup_id)->get(['id', 'name', 'track_image', 'track_layout']);
+
+        return response()->json([
+            'cup_name' => $cup->name,
+            'cup_logo' => asset('storage/cups/' . $cup->cup_logo),
+            'tracks' => $tracks->map(function ($track) {
+                return [
+                    'id' => $track->id,
+                    'name' => $track->name,
+                    'track_image' => asset('storage/tracks/' . $track->track_image),
+                    'track_layout' => asset('storage/track-layouts/' . $track->track_layout),
+                ];
+            }),
+        ]);
+    }
 
     /**
      * Process veto selections.

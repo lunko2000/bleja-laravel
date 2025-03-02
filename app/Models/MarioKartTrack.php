@@ -11,4 +11,9 @@ class MarioKartTrack extends Model
         'name',
         'track_cup',
     ];
+
+    public function cup()
+    {
+        return $this->belongsTo(MarioKartCup::class, 'track_cup', 'id');
+    }
 }

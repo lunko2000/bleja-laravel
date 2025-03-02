@@ -17,4 +17,8 @@ class MarioKartCup extends Model
         return $this->hasMany(MarioKartGameCup::class, 'cup_id');
     }
     
+    public function tracks()
+    {
+        return $this->hasMany(MarioKartTrack::class, 'track_cup', 'id');
+    }
 }

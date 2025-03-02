@@ -1,66 +1,104 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 </p>
 
-## About Laravel
+# Mario Kart Tournament App
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Overview
+The **Mario Kart Tournament App** is designed to facilitate competitive Mario Kart matches with structured vetoing, match tracking, and scoring mechanisms. This app enables admins to create and manage matches while allowing players to participate and view their stats.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Features
+### 🔑 User Authentication & Roles
+#### **Admin**
+- ✅ Creates and manages users.
+- ✅ Controls match setup, scoring, and progress.
+- ✅ Can log in as either **Admin** or **Player**.
 
-## Learning Laravel
+#### **Player**
+- ✅ Views personal match history and statistics.
+- ✅ Participates in matches.
+- ✅ Can change their password.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 🎮 Match System
+- **Cup Veto Process**: Players take turns banning and picking cups before a match.
+- **Match Tracking**:
+  - 📌 Displays current races, scores, and standings.
+  - 📊 Players' placements are recorded after each race.
+- **Scoring System**:
+  - 🏆 **BO1 (Best of 1)** → First to win 1 cup.
+  - 🏆 **BO3 (Best of 3)** → First to win 2 cups.
+- **Race & Cup Modals**:
+  - 🎨 Interactive UI displaying race details and track layouts.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠 Installation & Setup
+### 📌 Prerequisites
+- PHP 8+
+- Composer
+- Node.js & NPM
+- MySQL / PostgreSQL
 
-## Laravel Sponsors
+### 🔧 Steps
+1. **Clone the repository**:
+   ```sh
+   git clone <repository-link>
+   cd bleja-laravel
+   ```
+2. **Install dependencies**:
+   ```sh
+   composer install
+   npm install && npm run dev
+   ```
+3. **Set up the database**:
+   - Create a `.env` file (or copy `.env.example`).
+   - Update database credentials.
+   ```sh
+   php artisan migrate --seed
+   ```
+4. **Run the application**:
+   ```sh
+   php artisan serve
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🔑 Default Admin Credentials
+To test admin functionality, log in with:
+- **👤 Username**: `lunko2000`
+- **🔒 Password**: `lunko2000`
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+> *(You can change these credentials after logging in.)*
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ⚙️ Tech Stack
+- **Backend**: Laravel 10, PHP 8, MySQL/PostgreSQL
+- **Frontend**: Blade, Tailwind CSS (if applicable)
+- **Authentication**: Laravel Breeze
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📈 Future Plans
+- 🔹 Implement **Player Stats Page**.
+- 🔹 Introduce **new game types** (Darts, 8Ball Pool).
+- 🔹 Improve **match scheduling and ranking system**.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🤝 Contributing
+This app is a **private project**, but contributions & feedback are welcome!
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 📜 License
+MIT License. Free to use and modify.
+
+---
+
+## 📬 Contact
+For inquiries, feel free to reach out to the project owner!
+
+---
