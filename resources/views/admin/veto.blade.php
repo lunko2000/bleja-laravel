@@ -19,86 +19,86 @@
 
         <!-- Cup Selection Form -->
         @if($currentStepMessage !== 'Veto process complete!')
-            <form method="POST" action="{{ route('admin.matches.veto.process') }}">
-                @csrf
-
-                <!-- Cup Selection Grid -->
-                <div class="grid grid-cols-4 gap-4 mb-6">
-                    @foreach ($availableCups as $cup)
-                    @php
-                        $isBannedOrPicked = in_array($cup->id, array_column($vetoHistory, 'cup_id'));
-                        $cupVetoEntry = collect($vetoHistory)->firstWhere('cup_id', $cup->id);
-                        $vetoType = $cupVetoEntry['type'] ?? null;
-                        $vetoPlayer = $cupVetoEntry['player_name'] ?? null;
-
-                        $isBo1FinalCup = $matchSetup['format'] === 'bo1' && count($vetoHistory) === 7 && isset($remainingCup) && $remainingCup->id === $cup->id;
-                        $isDecider = $matchSetup['format'] === 'bo3' 
-                            && in_array('decider', array_column($vetoHistory, 'type')) 
-                            && $cup->id === $vetoHistory[array_search('decider', array_column($vetoHistory, 'type'))]['cup_id'];
-                    @endphp
-
-                    <div class="relative flex flex-col items-center">
-                        <!-- Main Cup Button -->
-                        <button type="button"
-                            class="cup-button relative bg-gray-700 hover:bg-gray-600 p-2 rounded-lg transition w-20 h-20 md:w-36 md:h-20 flex items-center justify-center
-                            @if($isBannedOrPicked) 
-                                cursor-not-allowed opacity-50 no-hover
-                                @if($vetoType === 'ban') bg-red-700 hover:bg-red-700
-                                @elseif($vetoType === 'pick') bg-green-700 hover:bg-green-700
-                                @endif 
+        <form method="POST" action="{{ route('admin.matches.veto.process') }}" onsubmit="return handleFormSubmit(event)">
+            @csrf
+        
+            <!-- Cup Selection Grid -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                @foreach ($availableCups as $cup)
+                @php
+                    $isBannedOrPicked = in_array($cup->id, array_column($vetoHistory, 'cup_id'));
+                    $cupVetoEntry = collect($vetoHistory)->firstWhere('cup_id', $cup->id);
+                    $vetoType = $cupVetoEntry['type'] ?? null;
+                    $vetoPlayer = $cupVetoEntry['player_name'] ?? null;
+        
+                    $isBo1FinalCup = $matchSetup['format'] === 'bo1' && count($vetoHistory) === 7 && isset($remainingCup) && $remainingCup->id === $cup->id;
+                    $isDecider = $matchSetup['format'] === 'bo3' 
+                        && in_array('decider', array_column($vetoHistory, 'type')) 
+                        && $cup->id === $vetoHistory[array_search('decider', array_column($vetoHistory, 'type'))]['cup_id'];
+                @endphp
+        
+                <div class="relative flex flex-col items-center">
+                    <!-- Main Cup Button -->
+                    <button type="button"
+                        class="cup-button relative bg-gray-700 hover:bg-gray-600 p-2 rounded-lg transition w-20 h-20 md:w-36 md:h-20 flex items-center justify-center
+                        @if($isBannedOrPicked) 
+                            cursor-not-allowed opacity-50 no-hover
+                            @if($vetoType === 'ban') bg-red-700 hover:bg-red-700
+                            @elseif($vetoType === 'pick') bg-green-700 hover:bg-green-700
+                            @endif 
+                        @elseif($isBo1FinalCup)
+                            bg-blue-700 text-white font-bold cursor-not-allowed no-hover
+                        @elseif($isDecider)
+                            bg-blue-700 text-white font-bold cursor-not-allowed no-hover !important
+                        @endif"
+                        data-cup-id="{{ $cup->id }}"
+                        @if($isBannedOrPicked || $isBo1FinalCup || $isDecider) disabled @endif>
+                        
+                        <!-- Cup Logo (Centered) -->
+                        <img src="{{ asset('storage/cups/' . $cup->cup_logo) }}" alt="{{ $cup->name }}" class="w-16 h-16 mx-auto">
+                    </button>
+        
+                    <!-- Info Button (Inside Cup Button for Now, Will Adjust Later) -->
+                    <button type="button" class="absolute top-1 right-1 bg-blue-500 hover:bg-blue-600 text-white text-xs px-1 py-1 rounded-full"
+                        onclick="showCupTracks(event, {{ $cup->id }})">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+        
+                    <!-- Veto Label Underneath (Same Width as Cup Button) -->
+                    @if($vetoType || $isBo1FinalCup)
+                        <span class="mt-2 px-2 py-1 rounded text-sm font-semibold text-center w-20 md:w-36
+                            @if($vetoType === 'ban') bg-red-500 text-white 
+                            @elseif($vetoType === 'pick') bg-green-500 text-white 
+                            @elseif($vetoType === 'decider' || $isBo1FinalCup) bg-blue-500 text-white 
+                            @endif">
+                            @if($isDecider)
+                                Decider
                             @elseif($isBo1FinalCup)
-                                bg-blue-700 text-white font-bold cursor-not-allowed no-hover
-                            @elseif($isDecider)
-                                bg-blue-700 text-white font-bold cursor-not-allowed no-hover !important
-                            @endif"
-                            data-cup-id="{{ $cup->id }}"
-                            @if($isBannedOrPicked || $isBo1FinalCup || $isDecider) disabled @endif>
-                            
-                            <!-- Cup Logo (Centered) -->
-                            <img src="{{ asset('storage/cups/' . $cup->cup_logo) }}" alt="{{ $cup->name }}" class="w-16 h-16 mx-auto">
-
-                            <!-- Info Button (Inside the Cup Button) -->
-                            <button class="absolute top-1 right-1 bg-blue-500 hover:bg-blue-600 text-white text-xs px-1 py-1 rounded-full"
-                                onclick="showCupTracks(event, {{ $cup->id }})">
-                                <i class="bi bi-info-circle"></i>
-                            </button>
-                        </button>
-
-                        <!-- Veto Label Underneath (Same Width as Cup Button) -->
-                        @if($vetoType || $isBo1FinalCup)
-                            <span class="mt-2 px-2 py-1 rounded text-sm font-semibold text-center w-20 md:w-36
-                                @if($vetoType === 'ban') bg-red-500 text-white 
-                                @elseif($vetoType === 'pick') bg-green-500 text-white 
-                                @elseif($vetoType === 'decider' || $isBo1FinalCup) bg-blue-500 text-white 
-                                @endif">
-                                @if($isDecider)
-                                    Decider
-                                @elseif($isBo1FinalCup)
-                                    Cup to be Played
-                                @else
-                                    {{ ucfirst($vetoType) }}: {{ $vetoPlayer }}
-                                @endif
-                            </span>
-                        @endif
-                    </div>
-                    @endforeach
+                                Cup to be Played
+                            @else
+                                {{ ucfirst($vetoType) }}: {{ $vetoPlayer }}
+                            @endif
+                        </span>
+                    @endif
                 </div>
-
-                <!-- Hidden Input for Selected Cup -->
-                <input type="hidden" name="cup_id" id="selectedCupId" required>
-
-                <!-- Confirm Veto Choice Button -->
-                <button type="submit" id="confirmButton"
-                        class="w-full bg-gray-500 text-gray-300 font-bold py-3 px-6 rounded-lg transition"
-                        disabled>
-                    ✅ Confirm Veto Choice
-                </button>
-
-                <!-- Randomize Veto Button -->
-                <button id="randomizeVetoBtn" class="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition">
-                    🎲 Randomize Veto Process
-                </button>
-            </form>
+                @endforeach
+            </div>
+        
+            <!-- Hidden Input for Selected Cup -->
+            <input type="hidden" name="cup_id" id="selectedCupId" required>
+        
+            <!-- Confirm Veto Choice Button -->
+            <button type="submit" id="confirmButton"
+                    class="w-full bg-gray-500 text-gray-300 font-bold py-3 px-6 rounded-lg transition"
+                    disabled>
+                ✅ Confirm Veto Choice
+            </button>
+        
+            <!-- Randomize Veto Button -->
+            <button id="randomizeVetoBtn" type="button" class="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                🎲 Randomize Veto Process
+            </button>
+        </form>
         @endif
 
         <!-- Start the Match Button -->
@@ -172,176 +172,218 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    console.log("🔍 Initializing Veto Process...");
-
-    // Initial Decider Check
-    const initialVetoHistory = @json($vetoHistory);
-    checkDecider(initialVetoHistory);
-
-    // Disable Randomize Button if there’s a manual veto move (excluding auto-ban)
-    const randomizeBtn = document.getElementById('randomizeVetoBtn');
-    const manualVetoMoves = initialVetoHistory.filter(entry => entry.type !== 'auto-ban');
-    if (manualVetoMoves.length > 0) {
-        randomizeBtn.disabled = true;
-        randomizeBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-        randomizeBtn.classList.add('bg-gray-500', 'text-gray-300', 'cursor-not-allowed');
-    }
-
-    // Existing Button Selection Logic
-    const cupButtons = document.querySelectorAll('.cup-button:not(.no-hover)');
-    const confirmButton = document.getElementById('confirmButton');
-    const selectedCupInput = document.getElementById('selectedCupId');
-
-    cupButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            cupButtons.forEach(btn => btn.classList.remove('bg-green-500', 'text-white'));
-            this.classList.add('bg-green-500', 'text-white');
-            selectedCupInput.value = this.getAttribute('data-cup-id');
-            confirmButton.removeAttribute('disabled');
-            confirmButton.classList.add('bg-indigo-500', 'hover:bg-indigo-600', 'text-white');
-        });
-    });
-
-    // Randomize Veto Process
-    randomizeBtn.addEventListener('click', function () {
-        randomizeBtn.disabled = true;
-        randomizeBtn.textContent = 'Randomizing...';
-
-        fetch('/admin/matches/randomize-veto', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Fetch successful:', data);
-            if (data.success) {
-                const vetoHistory = data.vetoHistory;
-                animateVetoProcess(vetoHistory, () => {
-                    // Redirect after animation to refresh with updated state
-                    window.location.href = '{{ route('admin.matches.veto') }}';
-                });
-            } else {
-                alert('Error randomizing veto process.');
-                randomizeBtn.disabled = false;
-                randomizeBtn.textContent = '🎲 Randomize Veto Process';
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    });
-
-    function animateVetoProcess(vetoHistory, callback) {
-        const cupButtons = document.querySelectorAll('.cup-button');
-        let index = 0;
-
-        function updateUI() {
-            if (index < vetoHistory.length) {
-                const veto = vetoHistory[index];
-                const cupButton = document.querySelector(`[data-cup-id="${veto.cup_id}"]`);
-                if (cupButton) {
-                    cupButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
-                    cupButton.classList.add('cursor-not-allowed', 'opacity-50', 'no-hover');
-                    if (veto.type === 'ban' || veto.type === 'auto-ban') {
-                        cupButton.classList.add('bg-red-700');
-                    } else if (veto.type === 'pick') {
-                        cupButton.classList.add('bg-green-700');
-                    } else if (veto.type === 'decider') {
-                        cupButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
-                    }
-                    const label = cupButton.nextElementSibling;
-                    if (label) {
-                        label.classList.add('mt-2', 'px-2', 'py-1', 'rounded', 'text-sm', 'font-semibold', 'text-center');
-                        if (veto.type === 'ban' || veto.type === 'auto-ban') {
-                            label.classList.add('bg-red-500', 'text-white');
-                            label.textContent = `Ban: ${veto.player_name || 'undefined'}`;
-                        } else if (veto.type === 'pick') {
-                            label.classList.add('bg-green-500', 'text-white');
-                            label.textContent = `Pick: ${veto.player_name}`;
-                        } else if (veto.type === 'decider') {
-                            label.classList.add('bg-blue-500', 'text-white');
-                            label.textContent = 'Decider';
-                        }
-                    }
-                }
-                index++;
-                if (index < vetoHistory.length) {
-                    setTimeout(updateUI, 750); // 1-second delay
-                } else {
-                    setTimeout(callback, 250); // Call callback after last step
-                }
-            }
-        }
-        updateUI();
-    }
-
-    function checkDecider(vetoHistory) {
-        const deciderEntry = vetoHistory.find(entry => entry.type === 'decider');
-        if (deciderEntry) {
-            const deciderCupId = deciderEntry.cup_id;
-            console.log("🆔 Decider Cup ID:", deciderCupId);
-            const deciderButton = document.querySelector(`[data-cup-id='${deciderCupId}']`);
-            if (deciderButton) {
-                deciderButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
-                console.log("🎨 Decider Cup Applied:", deciderButton.classList);
-            } else {
-                console.warn("⚠️ Decider Cup Button NOT Found in DOM!");
-            }
-        } else {
-            console.warn("⚠️ No Decider Cup Found in Veto History!");
-        }
-    }
-
-    // Modal Functions (unchanged)
+    // Modal Functions with Try-Catch and Enhanced Debugging
     function showCupTracks(event, cupId) {
-        event.preventDefault();
-        fetch(`/api/cups/${cupId}/tracks`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-                document.getElementById('modalCupLogo').src = data.cup_logo;
-                document.getElementById('modalCupName').innerText = data.cup_name;
-                document.getElementById('modalCupNameText').innerText = data.cup_name;
-                let trackList = document.getElementById('trackList');
-                trackList.innerHTML = "";
-                data.tracks.forEach(track => {
-                    let listItem = document.createElement('li');
-                    let trackLink = document.createElement('a');
-                    trackLink.href = "#";
-                    trackLink.innerText = track.name;
-                    trackLink.classList.add('text-blue-400', 'hover:underline');
-                    trackLink.onclick = function (event) {
-                        event.preventDefault();
-                        showRaceDetails(track.name, track.track_image, track.track_layout);
-                    };
-                    listItem.appendChild(trackLink);
-                    trackList.appendChild(listItem);
-                });
-                document.getElementById('trackModal').classList.remove('hidden');
-            })
-            .catch(error => console.error("Error fetching tracks:", error));
+        event.preventDefault(); // Ensure form submission is prevented
+        console.log('Attempting to show tracks for cupId:', cupId);
+        try {
+            if (isNaN(cupId)) {
+                return;
+            }
+            fetch(`/api/cups/${cupId}/tracks`)
+                .then(response => {
+                    console.log('Fetch response status:', response.status);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Fetch data:', data);
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    document.getElementById('modalCupLogo').src = data.cup_logo || '';
+                    document.getElementById('modalCupName').innerText = data.cup_name || 'Unknown Cup';
+                    document.getElementById('modalCupNameText').innerText = data.cup_name || 'Unknown Cup';
+                    let trackList = document.getElementById('trackList');
+                    if (!trackList) console.error('trackList element not found');
+                    trackList.innerHTML = "";
+                    (data.tracks || []).forEach(track => {
+                        let listItem = document.createElement('li');
+                        let trackLink = document.createElement('a');
+                        trackLink.href = "#";
+                        trackLink.innerText = track.name || 'Unknown Track';
+                        trackLink.classList.add('text-blue-400', 'hover:underline');
+                        trackLink.onclick = function (event) {
+                            event.preventDefault();
+                            showRaceDetails(track.name, track.track_image, track.track_layout);
+                        };
+                        listItem.appendChild(trackLink);
+                        trackList.appendChild(listItem);
+                    });
+                    const trackModal = document.getElementById('trackModal');
+                    if (!trackModal) console.error('trackModal element not found');
+                    trackModal.classList.remove('hidden');
+                })
+                .catch(error => console.error("Error fetching tracks:", error));
+        } catch (error) {
+            console.error("Error in showCupTracks:", error);
+        }
     }
 
     function closeTrackModal() {
-        document.getElementById('trackModal').classList.add('hidden');
+        const trackModal = document.getElementById('trackModal');
+        if (trackModal) trackModal.classList.add('hidden');
+        else console.error('trackModal element not found');
     }
 
     function showRaceDetails(raceName, trackImage, trackLayout) {
-        document.getElementById('raceTitle').innerText = raceName;
-        document.getElementById('mainRaceImage').src = trackImage;
-        document.getElementById('layoutRaceImage').src = trackLayout;
-        document.getElementById('raceModal').classList.remove('hidden');
+        document.getElementById('raceTitle').innerText = raceName || 'Unknown Race';
+        document.getElementById('mainRaceImage').src = trackImage || '';
+        document.getElementById('layoutRaceImage').src = trackLayout || '';
+        const raceModal = document.getElementById('raceModal');
+        if (raceModal) raceModal.classList.remove('hidden');
+        else console.error('raceModal element not found');
     }
 
     function closeRaceModal() {
-        document.getElementById('raceModal').classList.add('hidden');
+        const raceModal = document.getElementById('raceModal');
+        if (raceModal) raceModal.classList.add('hidden');
+        else console.error('raceModal element not found');
     }
-});
+
+    // Form submission handler to prevent default unless confirm button
+    function handleFormSubmit(event) {
+        const confirmBtn = document.getElementById('confirmButton');
+        if (event.submitter && event.submitter.id === 'confirmButton' && !confirmBtn.disabled) {
+            return true; // Allow submission for confirm button
+        }
+        event.preventDefault(); // Prevent submission for all other actions
+        return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log("🔍 Initializing Veto Process...");
+
+        // Initial Decider Check
+        const initialVetoHistory = @json($vetoHistory) || [];
+        checkDecider(initialVetoHistory);
+
+        // Disable Randomize Button if there’s a manual veto move (excluding auto-ban)
+        const randomizeBtn = document.getElementById('randomizeVetoBtn');
+        const manualVetoMoves = initialVetoHistory.filter(entry => entry.type !== 'auto-ban');
+        if (manualVetoMoves.length > 0) {
+            randomizeBtn.disabled = true;
+            randomizeBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            randomizeBtn.classList.add('bg-gray-500', 'text-gray-300', 'cursor-not-allowed');
+        }
+
+        // Existing Button Selection Logic
+        const cupButtons = document.querySelectorAll('.cup-button:not(.no-hover)');
+        const confirmButton = document.getElementById('confirmButton');
+        const selectedCupInput = document.getElementById('selectedCupId');
+
+        cupButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                cupButtons.forEach(btn => btn.classList.remove('bg-green-500', 'text-white'));
+                this.classList.add('bg-green-500', 'text-white');
+                selectedCupInput.value = this.getAttribute('data-cup-id');
+                confirmButton.removeAttribute('disabled');
+                confirmButton.classList.add('bg-indigo-500', 'hover:bg-indigo-600', 'text-white');
+            });
+        });
+
+        // Randomize Veto Process
+        randomizeBtn.addEventListener('click', function () {
+            randomizeBtn.disabled = true;
+            randomizeBtn.textContent = 'Randomizing...';
+
+            fetch('/admin/matches/randomize-veto', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Fetch successful:', data);
+                if (data.success) {
+                    const vetoHistory = data.vetoHistory;
+                    animateVetoProcess(vetoHistory, () => {
+                        // Redirect after animation to refresh with updated state
+                        window.location.href = '{{ route('admin.matches.veto') }}';
+                    });
+                } else {
+                    alert('Error randomizing veto process.');
+                    randomizeBtn.disabled = false;
+                    randomizeBtn.textContent = '🎲 Randomize Veto Process';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function animateVetoProcess(vetoHistory, callback) {
+            const cupButtons = document.querySelectorAll('.cup-button');
+            let index = 0;
+
+            function updateUI() {
+                if (index < vetoHistory.length) {
+                    const veto = vetoHistory[index];
+                    const cupButton = document.querySelector(`[data-cup-id="${veto.cup_id}"]`);
+                    if (cupButton) {
+                        cupButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                        cupButton.classList.add('cursor-not-allowed', 'opacity-50', 'no-hover');
+                        if (veto.type === 'ban' || veto.type === 'auto-ban') {
+                            cupButton.classList.add('bg-red-700');
+                        } else if (veto.type === 'pick') {
+                            cupButton.classList.add('bg-green-700');
+                        } else if (veto.type === 'decider') {
+                            cupButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
+                        }
+                        const label = cupButton.nextElementSibling;
+                        if (label) {
+                            label.classList.add('mt-2', 'px-2', 'py-1', 'rounded', 'text-sm', 'font-semibold', 'text-center');
+                            if (veto.type === 'ban' || veto.type === 'auto-ban') {
+                                label.classList.add('bg-red-500', 'text-white');
+                                label.textContent = `Ban: ${veto.player_name || 'undefined'}`;
+                            } else if (veto.type === 'pick') {
+                                label.classList.add('bg-green-500', 'text-white');
+                                label.textContent = `Pick: ${veto.player_name}`;
+                            } else if (veto.type === 'decider') {
+                                label.classList.add('bg-blue-500', 'text-white');
+                                label.textContent = 'Decider';
+                            }
+                        }
+                    }
+                    index++;
+                    if (index < vetoHistory.length) {
+                        setTimeout(updateUI, 750); // 1-second delay
+                    } else {
+                        setTimeout(callback, 250); // Call callback after last step
+                    }
+                }
+            }
+            updateUI();
+        }
+
+        function checkDecider(vetoHistory) {
+            const deciderEntry = vetoHistory.find(entry => entry.type === 'decider');
+            if (deciderEntry) {
+                const deciderCupId = deciderEntry.cup_id;
+                console.log("🆔 Decider Cup ID:", deciderCupId);
+                const deciderButton = document.querySelector(`[data-cup-id='${deciderCupId}']`);
+                if (deciderButton) {
+                    deciderButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
+                    console.log("🎨 Decider Cup Applied:", deciderButton.classList);
+                } else {
+                    console.warn("⚠️ Decider Cup Button NOT Found in DOM!");
+                }
+            } else {
+                console.warn("⚠️ No Decider Cup Found in Veto History!");
+            }
+        }
+    });
+
+    // Form submission handler to prevent default unless confirm button
+    function handleFormSubmit(event) {
+        const confirmBtn = document.getElementById('confirmButton');
+        if (event.submitter && event.submitter.id === 'confirmButton' && !confirmBtn.disabled) {
+            return true; // Allow submission for confirm button
+        }
+        event.preventDefault(); // Prevent submission for all other actions
+        return false;
+    }
 </script>
 
 <style>
