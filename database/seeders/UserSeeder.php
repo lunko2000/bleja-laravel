@@ -10,8 +10,8 @@ class UserSeeder extends Seeder {
     public function run(): void {
         User::create([
             'name' => 'Milan',
-            'username' => 'lunko', // Change to username instead of email
-            'password' => Hash::make('password'), // Hash the password
+            'username' => 'lunko2000', // Change to username instead of email
+            'password' => Hash::make(env('DEFAULT_ADMIN_PASSWORD', 'password')), // Hash the password
             'role' => 'admin',
         ]);
     }

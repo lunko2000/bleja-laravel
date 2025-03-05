@@ -58,10 +58,27 @@ The **Mario Kart Tournament App** is designed to facilitate competitive Mario Ka
    ```sh
    php artisan migrate --seed
    ```
-4. **Run the application**:
+4. **Generate the application key**:
+   ```sh
+   php artisan key:generate
+   ```
+5. **Link the storage folder** (required for uploads & saved files):
+   ```sh
+   php artisan storage:link
+   ```
+6. **Run the application**:
    ```sh
    php artisan serve
    ```
+
+---
+
+## 🔄 Resetting & Reseeding the Database
+If you need to completely reset and reseed the database, use:
+```sh
+php artisan migrate:fresh --seed
+```
+> ⚠️ This **deletes all existing data** and creates a fresh database with test users.
 
 ---
 
