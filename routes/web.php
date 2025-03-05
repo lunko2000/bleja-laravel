@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [UserController::class, 'update'])->name('profile.update');
 
     Route::get('/api/cups/{cup_id}/tracks', [MarioKartGameController::class, 'getTracksForCup']);
+    Route::post('/admin/matches/randomize-veto', [MarioKartGameController::class, 'randomizeVeto'])->name('admin.matches.randomize');
 });
 
 require __DIR__.'/auth.php';

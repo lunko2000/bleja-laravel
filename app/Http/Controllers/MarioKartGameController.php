@@ -431,4 +431,74 @@ class MarioKartGameController extends Controller
 
         return redirect()->route('admin.match.show', $game->id)->with('success', 'Race results submitted!');
     }
+
+    /**
+     * Randomize the veto process and animate the results.
+     */
+    public function randomizeVeto(Request $request)
+    {
+        $matchSetup = session('match_setup');
+        if (!$matchSetup) {
+            return response()->json(['error' => 'No match setup found.'], 400);
+        }
+
+        $isBo1 = $matchSetup['format'] === 'bo1';
+        $vetoSteps = $isBo1
+            ? ['ban', 'ban', 'ban', 'ban', 'ban', 'ban', 'ban']
+            : ['auto-ban', 'ban', 'ban', 'pick', 'pick', 'ban', 'ban', 'decider'];
+
+        $vetoHistory = session('veto_history', []);
+        $availableCups = MarioKartCup::whereNotIn('id', array_column($vetoHistory, 'cup_id'))->get();
+        $playerTurnId = $matchSetup['player1']; // Start with player1
+
+        // Handle auto-ban for BO3 if not already done
+        if (!$isBo1 && count($vetoHistory) === 0) {
+            $randomCup = $availableCups->random();
+            $vetoHistory[] = [
+                'cup_id' => $randomCup->id,
+                'cup_name' => $randomCup->name,
+                'cup_logo' => $randomCup->cup_logo,
+                'type' => 'auto-ban',
+            ];
+            $availableCups = $availableCups->where('id', '!=', $randomCup->id);
+        }
+
+        // Process remaining veto steps
+        for ($i = count($vetoHistory); $i < count($vetoSteps); $i++) {
+            $currentStep = $vetoSteps[$i];
+            $playerTurn = ($i % 2 === 0) ? $matchSetup['player1'] : $matchSetup['player2'];
+            $playerTurnName = User::find($playerTurn)->username ?? "Unknown Player";
+
+            if ($availableCups->isEmpty() && $currentStep !== 'decider') {
+                break; // Only break if not decider and no cups left
+            }
+
+            if ($currentStep === 'decider') {
+                $remainingCup = $availableCups->first();
+                if ($remainingCup) {
+                    $vetoHistory[] = [
+                        'cup_id' => $remainingCup->id,
+                        'cup_name' => $remainingCup->name,
+                        'cup_logo' => $remainingCup->cup_logo,
+                        'type' => 'decider',
+                        'player_name' => $playerTurnName,
+                    ];
+                }
+            } else {
+                $randomCup = $availableCups->random();
+                $vetoHistory[] = [
+                    'cup_id' => $randomCup->id,
+                    'cup_name' => $randomCup->name,
+                    'cup_logo' => $randomCup->cup_logo,
+                    'type' => $currentStep,
+                    'player_name' => $playerTurnName,
+                    'picked_by' => ($currentStep === 'pick') ? $playerTurn : null,
+                ];
+                $availableCups = $availableCups->where('id', '!=', $randomCup->id);
+            }
+        }
+
+        session(['veto_history' => $vetoHistory]);
+        return response()->json(['success' => true, 'vetoHistory' => $vetoHistory]);
+    }
 }

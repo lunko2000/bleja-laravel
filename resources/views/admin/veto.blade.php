@@ -93,6 +93,11 @@
                         disabled>
                     ✅ Confirm Veto Choice
                 </button>
+
+                <!-- Randomize Veto Button -->
+                <button id="randomizeVetoBtn" class="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                    🎲 Randomize Veto Process
+                </button>
             </form>
         @endif
 
@@ -168,40 +173,22 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("🔍 Checking for Decider Cup...");
+    console.log("🔍 Initializing Veto Process...");
 
-    // Ensure that 'decider' exists in vetoHistory before proceeding
-    const vetoHistory = @json($vetoHistory);
-    const deciderEntry = vetoHistory.find(entry => entry.type === 'decider');
+    // Initial Decider Check
+    const initialVetoHistory = @json($vetoHistory);
+    checkDecider(initialVetoHistory);
 
-    if (deciderEntry) {
-        const deciderCupId = deciderEntry.cup_id;
-        console.log("🆔 Decider Cup ID:", deciderCupId);
-
-        if (deciderCupId) {
-            // Select the button with matching cup ID
-            const deciderButton = document.querySelector(`[data-cup-id='${deciderCupId}']`);
-
-            if (deciderButton) {
-                console.log("✅ Decider Cup Button Found!", deciderButton);
-
-                // Remove blue class from any previously assigned elements (fixes the auto-ban issue)
-                document.querySelectorAll('.cup-button.bg-blue-700').forEach(btn => {
-                    btn.classList.remove('bg-blue-700', 'text-white', 'font-bold');
-                });
-
-                // Apply blue class only to the actual decider cup
-                deciderButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
-                console.log("🎨 Applied Decider Cup Class:", deciderButton.classList);
-            } else {
-                console.warn("⚠️ Decider Cup Button NOT Found in DOM!");
-            }
-        }
-    } else {
-        console.warn("⚠️ No Decider Cup Found in Veto History Yet!");
+    // Disable Randomize Button if there’s a manual veto move (excluding auto-ban)
+    const randomizeBtn = document.getElementById('randomizeVetoBtn');
+    const manualVetoMoves = initialVetoHistory.filter(entry => entry.type !== 'auto-ban');
+    if (manualVetoMoves.length > 0) {
+        randomizeBtn.disabled = true;
+        randomizeBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+        randomizeBtn.classList.add('bg-gray-500', 'text-gray-300', 'cursor-not-allowed');
     }
 
-    // ✅ Keep Your Existing Button Selection Logic
+    // Existing Button Selection Logic
     const cupButtons = document.querySelectorAll('.cup-button:not(.no-hover)');
     const confirmButton = document.getElementById('confirmButton');
     const selectedCupInput = document.getElementById('selectedCupId');
@@ -215,61 +202,146 @@ document.addEventListener('DOMContentLoaded', function () {
             confirmButton.classList.add('bg-indigo-500', 'hover:bg-indigo-600', 'text-white');
         });
     });
-});
 
-function showCupTracks(event, cupId) {
-    event.preventDefault(); // Prevent accidental page refresh
+    // Randomize Veto Process
+    randomizeBtn.addEventListener('click', function () {
+        randomizeBtn.disabled = true;
+        randomizeBtn.textContent = 'Randomizing...';
 
-    fetch(`/api/cups/${cupId}/tracks`)
+        fetch('/admin/matches/randomize-veto', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
+            console.log('Fetch successful:', data);
+            if (data.success) {
+                const vetoHistory = data.vetoHistory;
+                animateVetoProcess(vetoHistory, () => {
+                    // Redirect after animation to refresh with updated state
+                    window.location.href = '{{ route('admin.matches.veto') }}';
+                });
+            } else {
+                alert('Error randomizing veto process.');
+                randomizeBtn.disabled = false;
+                randomizeBtn.textContent = '🎲 Randomize Veto Process';
             }
-
-            document.getElementById('modalCupLogo').src = data.cup_logo;
-            document.getElementById('modalCupName').innerText = data.cup_name;
-            document.getElementById('modalCupNameText').innerText = data.cup_name;
-
-            // Update track list with clickable links
-            let trackList = document.getElementById('trackList');
-            trackList.innerHTML = "";
-            data.tracks.forEach(track => {
-                let listItem = document.createElement('li');
-                let trackLink = document.createElement('a');
-                trackLink.href = "#";
-                trackLink.innerText = track.name;
-                trackLink.classList.add('text-blue-400', 'hover:underline');
-                trackLink.onclick = function (event) {
-                    event.preventDefault();
-                    showRaceDetails(track.name, track.track_image, track.track_layout);
-                };
-
-                listItem.appendChild(trackLink);
-                trackList.appendChild(listItem);
-            });
-
-            document.getElementById('trackModal').classList.remove('hidden');
         })
-        .catch(error => console.error("Error fetching tracks:", error));
-}
+        .catch(error => console.error('Error:', error));
+    });
 
-function closeTrackModal() {
-    document.getElementById('trackModal').classList.add('hidden');
-}
+    function animateVetoProcess(vetoHistory, callback) {
+        const cupButtons = document.querySelectorAll('.cup-button');
+        let index = 0;
 
-function showRaceDetails(raceName, trackImage, trackLayout) {
-    document.getElementById('raceTitle').innerText = raceName;
-    document.getElementById('mainRaceImage').src = trackImage;
-    document.getElementById('layoutRaceImage').src = trackLayout;
+        function updateUI() {
+            if (index < vetoHistory.length) {
+                const veto = vetoHistory[index];
+                const cupButton = document.querySelector(`[data-cup-id="${veto.cup_id}"]`);
+                if (cupButton) {
+                    cupButton.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    cupButton.classList.add('cursor-not-allowed', 'opacity-50', 'no-hover');
+                    if (veto.type === 'ban' || veto.type === 'auto-ban') {
+                        cupButton.classList.add('bg-red-700');
+                    } else if (veto.type === 'pick') {
+                        cupButton.classList.add('bg-green-700');
+                    } else if (veto.type === 'decider') {
+                        cupButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
+                    }
+                    const label = cupButton.nextElementSibling;
+                    if (label) {
+                        label.classList.add('mt-2', 'px-2', 'py-1', 'rounded', 'text-sm', 'font-semibold', 'text-center');
+                        if (veto.type === 'ban' || veto.type === 'auto-ban') {
+                            label.classList.add('bg-red-500', 'text-white');
+                            label.textContent = `Ban: ${veto.player_name || 'undefined'}`;
+                        } else if (veto.type === 'pick') {
+                            label.classList.add('bg-green-500', 'text-white');
+                            label.textContent = `Pick: ${veto.player_name}`;
+                        } else if (veto.type === 'decider') {
+                            label.classList.add('bg-blue-500', 'text-white');
+                            label.textContent = 'Decider';
+                        }
+                    }
+                }
+                index++;
+                if (index < vetoHistory.length) {
+                    setTimeout(updateUI, 750); // 1-second delay
+                } else {
+                    setTimeout(callback, 250); // Call callback after last step
+                }
+            }
+        }
+        updateUI();
+    }
 
-    document.getElementById('raceModal').classList.remove('hidden');
-}
+    function checkDecider(vetoHistory) {
+        const deciderEntry = vetoHistory.find(entry => entry.type === 'decider');
+        if (deciderEntry) {
+            const deciderCupId = deciderEntry.cup_id;
+            console.log("🆔 Decider Cup ID:", deciderCupId);
+            const deciderButton = document.querySelector(`[data-cup-id='${deciderCupId}']`);
+            if (deciderButton) {
+                deciderButton.classList.add('bg-blue-700', 'text-white', 'font-bold');
+                console.log("🎨 Decider Cup Applied:", deciderButton.classList);
+            } else {
+                console.warn("⚠️ Decider Cup Button NOT Found in DOM!");
+            }
+        } else {
+            console.warn("⚠️ No Decider Cup Found in Veto History!");
+        }
+    }
 
-function closeRaceModal() {
-    document.getElementById('raceModal').classList.add('hidden');
-}
+    // Modal Functions (unchanged)
+    function showCupTracks(event, cupId) {
+        event.preventDefault();
+        fetch(`/api/cups/${cupId}/tracks`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                document.getElementById('modalCupLogo').src = data.cup_logo;
+                document.getElementById('modalCupName').innerText = data.cup_name;
+                document.getElementById('modalCupNameText').innerText = data.cup_name;
+                let trackList = document.getElementById('trackList');
+                trackList.innerHTML = "";
+                data.tracks.forEach(track => {
+                    let listItem = document.createElement('li');
+                    let trackLink = document.createElement('a');
+                    trackLink.href = "#";
+                    trackLink.innerText = track.name;
+                    trackLink.classList.add('text-blue-400', 'hover:underline');
+                    trackLink.onclick = function (event) {
+                        event.preventDefault();
+                        showRaceDetails(track.name, track.track_image, track.track_layout);
+                    };
+                    listItem.appendChild(trackLink);
+                    trackList.appendChild(listItem);
+                });
+                document.getElementById('trackModal').classList.remove('hidden');
+            })
+            .catch(error => console.error("Error fetching tracks:", error));
+    }
+
+    function closeTrackModal() {
+        document.getElementById('trackModal').classList.add('hidden');
+    }
+
+    function showRaceDetails(raceName, trackImage, trackLayout) {
+        document.getElementById('raceTitle').innerText = raceName;
+        document.getElementById('mainRaceImage').src = trackImage;
+        document.getElementById('layoutRaceImage').src = trackLayout;
+        document.getElementById('raceModal').classList.remove('hidden');
+    }
+
+    function closeRaceModal() {
+        document.getElementById('raceModal').classList.add('hidden');
+    }
+});
 </script>
 
 <style>
