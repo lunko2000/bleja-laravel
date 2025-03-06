@@ -6,7 +6,7 @@
         <h2 class="text-3xl font-bold mb-4">🎮 Start New Match</h2>
 
         <!-- Match Creation Form -->
-        <form method="POST" action="{{ route('admin.matches.store') }}">
+        <form method="POST" action="{{ route('admin.matches.store') }}" id="matchForm">
             @csrf
 
             <!-- Select Player 1 -->
@@ -15,11 +15,11 @@
                 <select name="player1" id="player1" required 
                         class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md">
                     <option value="">-- Choose a Player --</option>
-                        @foreach ($players as $player)
-                            @if ($player->id !== auth()->id()) 
-                                <option value="{{ $player->id }}">{{ $player->username }}</option>
-                            @endif
-                        @endforeach
+                    @foreach ($players as $player)
+                        @if ($player->id !== auth()->id())
+                            <option value="{{ $player->id }}" data-role="{{ $player->role }}">{{ $player->username }}</option>
+                        @endif
+                    @endforeach
                 </select>
             </div>
 
@@ -30,7 +30,7 @@
                         class="block w-full mt-1 p-2 bg-gray-700 border border-gray-600 rounded-md">
                     <option value="">-- Choose a Player --</option>
                     @foreach ($players as $player)
-                        <option value="{{ $player->id }}">{{ $player->username }}</option>
+                        <option value="{{ $player->id }}" data-role="{{ $player->role }}">{{ $player->username }}</option>
                     @endforeach
                 </select>
             </div>
@@ -50,6 +50,11 @@
                     class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg transition">
                 🚀 Create Match
             </button>
+
+            <!-- Guest Warning (Hidden by Default) -->
+            <p id="guestWarning" class="mt-4 text-sm text-yellow-400 hidden">
+                ⚠️ Games with guests do not track statistics.
+            </p>
         </form>
     </div>
 </div>
@@ -59,15 +64,31 @@
 document.addEventListener("DOMContentLoaded", function () {
     const player1 = document.getElementById("player1");
     const player2 = document.getElementById("player2");
+    const guestWarning = document.getElementById("guestWarning");
 
-    function updatePlayer2Options() {
+    function updatePlayerOptions() {
         const selectedPlayer1 = player1.value;
+        const selectedPlayer2 = player2.value;
+
+        // Disable Player 1 in Player 2 dropdown and vice versa
         for (let option of player2.options) {
             option.disabled = option.value === selectedPlayer1 && option.value !== "";
         }
+        for (let option of player1.options) {
+            option.disabled = option.value === selectedPlayer2 && option.value !== "";
+        }
+
+        // Show warning if either player is a guest
+        const isGuestSelected = 
+            (player1.value && player1.options[player1.selectedIndex].getAttribute('data-role') === 'guest') ||
+            (player2.value && player2.options[player2.selectedIndex].getAttribute('data-role') === 'guest');
+        guestWarning.classList.toggle('hidden', !isGuestSelected);
     }
 
-    player1.addEventListener("change", updatePlayer2Options);
-    player2.addEventListener("change", updatePlayer2Options);
+    player1.addEventListener("change", updatePlayerOptions);
+    player2.addEventListener("change", updatePlayerOptions);
+
+    // Initial check when page loads
+    updatePlayerOptions();
 });
 </script>

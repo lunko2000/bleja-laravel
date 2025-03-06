@@ -35,6 +35,13 @@
             </p>
             <p class="text-sm text-gray-400 mb-4">Format: <strong>{{ strtoupper($currentMatch->format) }}</strong></p>
 
+            <!-- Guest Warning -->
+            @if($currentMatch->playerOne->role === 'guest' || $currentMatch->playerTwo->role === 'guest')
+                <p class="text-sm text-yellow-400 mb-4">
+                    ⚠️ Games with guests do not track statistics.
+                </p>
+            @endif
+
             <a href="{{ route('admin.match.show', $currentMatch->id) }}" 
                 class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg transition">
                 🏆 Go to Match Page

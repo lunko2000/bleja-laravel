@@ -61,6 +61,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/api/cups/{cup_id}/tracks', [MarioKartGameController::class, 'getTracksForCup']);
     Route::post('/admin/matches/randomize-veto', [MarioKartGameController::class, 'randomizeVeto'])->name('admin.matches.randomize');
+
+    Route::delete('/admin/match/{game}/cleanup', [MarioKartGameController::class, 'cleanupMatch'])->name('admin.match.cleanup');
 });
 
 require __DIR__.'/auth.php';

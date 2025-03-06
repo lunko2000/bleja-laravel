@@ -119,51 +119,55 @@
 
         @endif
 
-        <!-- If Match is Completed, Show Final Results -->
+        <!-- Match is Completed Section -->
         @if ($game->status === 'completed')
-            <!-- WINNER SCREEN -->
-            <div class="bg-gray-700 p-6 rounded-lg text-center">
-                <!-- Players Information -->
-                <p class="text-lg text-gray-300 mb-2">
-                    {{ $game->playerOne->username }} vs {{ $game->playerTwo->username }}
-                </p>
+        <!-- WINNER SCREEN -->
+        <div class="bg-gray-700 p-6 rounded-lg text-center">
+            <!-- Players Information -->
+            <p class="text-lg text-gray-300 mb-2">
+                {{ $game->playerOne->username }} vs {{ $game->playerTwo->username }}
+            </p>
 
-                <h3 class="text-2xl font-bold text-green-400 mb-3">
-                    🏆 Winner: {{ optional($game->winner)->username ?? 'Unknown' }}
-                </h3>
+            <h3 class="text-2xl font-bold text-green-400 mb-3">
+                🏆 Winner: {{ optional($game->winner)->username ?? 'Unknown' }}
+            </h3>
 
-                <hr class="border-gray-500 my-2">
+            <hr class="border-gray-500 my-2">
 
-                <!-- Final Match Score -->
-                <p class="text-gray-300 text-lg">Final Score:</p>
-                <p class="text-3xl font-bold text-yellow-300 mb-3">
-                    {{ $player1CupWins }} - {{ $player2CupWins }}
-                </p>
+            <!-- Final Match Score -->
+            <p class="text-gray-300 text-lg">Final Score:</p>
+            <p class="text-3xl font-bold text-yellow-300 mb-3">
+                {{ $player1CupWins }} - {{ $player2CupWins }}
+            </p>
 
-                <!-- Individual Cup Results -->
-                <div class="space-y-2 text-gray-300">
-                    @foreach ($game->cups as $cup)
-                        @if ($cup->player1_score > 0 || $cup->player2_score > 0) <!-- ✅ Only show cups that were played -->
-                            <div class="flex items-center justify-center space-x-4">
-                                <!-- Cup Logo -->
-                                <img src="{{ asset('storage/cups/' . $cup->cup->cup_logo) }}" 
-                                    alt="{{ $cup->cup->name }}" class="w-8 h-8 rounded-full shadow-md">
+            <!-- Individual Cup Results -->
+            <div class="space-y-2 text-gray-300">
+                @foreach ($game->cups as $cup)
+                    @if ($cup->player1_score > 0 || $cup->player2_score > 0)
+                        <div class="flex items-center justify-center space-x-4">
+                            <!-- Cup Logo -->
+                            <img src="{{ asset('storage/cups/' . $cup->cup->cup_logo) }}" 
+                                alt="{{ $cup->cup->name }}" class="w-8 h-8 rounded-full shadow-md">
 
-                                <!-- Cup Score -->
-                                <p class="text-md font-semibold">
-                                    ({{ $cup->player1_score }} - {{ $cup->player2_score }})
-                                </p>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-
-                <!-- Return Button -->
-                <a href="{{ route('admin.dashboard') }}" 
-                    class="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition">
-                    🔙 Return to Admin Dashboard
-                </a>
+                            <!-- Cup Score -->
+                            <p class="text-md font-semibold">
+                                ({{ $cup->player1_score }} - {{ $cup->player2_score }})
+                            </p>
+                        </div>
+                    @endif
+                @endforeach
             </div>
+
+            <!-- Return Button -->
+            <form method="POST" action="{{ route('admin.match.cleanup', $game->id) }}">
+                @csrf
+                @method('DELETE')
+                <button type="submit" 
+                        class="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition">
+                    🔙 Return to Admin Dashboard
+                </button>
+            </form>
+        </div>
         @else
             <!-- Current Race Info -->
             <div class="mb-6">

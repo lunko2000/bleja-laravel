@@ -501,4 +501,19 @@ class MarioKartGameController extends Controller
         session(['veto_history' => $vetoHistory]);
         return response()->json(['success' => true, 'vetoHistory' => $vetoHistory]);
     }
+
+    public function cleanupMatch(MarioKartGame $game)
+    {
+        // Check if either player is a guest
+        $isGuestMatch = User::find($game->player1)->role === 'guest' || User::find($game->player2)->role === 'guest';
+
+        if ($isGuestMatch) {
+            // Delete related data (cascading deletes should handle most of this if foreign keys are set up)
+            $game->cups()->delete(); // Delete associated cups
+            $game->races()->delete(); // Delete associated races
+            $game->delete(); // Delete the game itself
+        }
+
+        return redirect()->route('admin.dashboard')->with('success', $isGuestMatch ? 'Guest match completed and removed from database.' : 'Match completed.');
+    }
 }
