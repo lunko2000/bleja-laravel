@@ -16,6 +16,11 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Install heroku-php-apache2 binary
+RUN mkdir -p /app/vendor/bin && \
+    curl -L https://github.com/heroku/heroku-buildpack-php/releases/download/v208/heroku-buildpack-php-v208.tar.gz | tar xz -C /app && \
+    mv /app/bin/heroku-php-apache2 /app/vendor/bin/heroku-php-apache2
+
 # Set working directory
 WORKDIR /var/www/html
 
@@ -41,4 +46,4 @@ RUN php -m
 EXPOSE 80
 
 # Start the app with heroku-php-apache2
-CMD ["vendor/bin/heroku-php-apache2", "public/"]
+CMD ["/app/vendor/bin/heroku-php-apache2", "public/"]
