@@ -40,8 +40,19 @@ RUN php artisan optimize
 # Optional: List PHP modules to confirm pdo_mysql is installed
 RUN php -m
 
-# Debug database connection variables (Updated comment to invalidate cache)
+# Debug database connection variables (will be empty during build, but useful for runtime logs)
 RUN echo "DB_HOST=$DB_HOST" && echo "DB_USERNAME=$DB_USERNAME" && echo "DB_PASSWORD=$DB_PASSWORD" # Updated on 2025-03-07
+
+# Create a script to check the database connection at runtime
+RUN echo "<?php\n\
+try {\n\
+    \$pdo = new PDO('mysql:host=' . getenv('DB_HOST') . ';port=' . getenv('DB_PORT') . ';dbname=' . getenv('DB_DATABASE'), getenv('DB_USERNAME'), getenv('DB_PASSWORD'));\n\
+    echo 'Database connection successful\\n';\n\
+} catch (PDOException \$e) {\n\
+    file_put_contents('/var/www/html/storage/logs/db-error.log', 'Connection failed: ' . \$e->getMessage() . \"\\n\", FILE_APPEND);\n\
+    exit(1);\n\
+}\n\
+" > /var/www/html/check-db.php
 
 # Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
@@ -59,5 +70,5 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 # Expose the port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Apache with database check
+CMD ["sh", "-c", "php /var/www/html/check-db.php && apache2-foreground"]
