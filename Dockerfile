@@ -55,7 +55,8 @@ try {\n\
 " > /var/www/html/check-db.php
 
 # Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Configure Apache to serve the Laravel public directory
 COPY ./public/.htaccess /var/www/html/public/.htaccess
@@ -66,6 +67,11 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
     Require all granted\n\
 </Directory>" >> /etc/apache2/apache2.conf \
     && echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+# Enable PHP error logging to stderr for deploy logs
+RUN echo "php_flag display_errors on" >> /etc/apache2/conf-enabled/error-logging.conf \
+    && echo "php_flag log_errors on" >> /etc/apache2/conf-enabled/error-logging.conf \
+    && echo "php_value error_log /proc/self/fd/2" >> /etc/apache2/conf-enabled/error-logging.conf
 
 # Expose the port
 EXPOSE 80
