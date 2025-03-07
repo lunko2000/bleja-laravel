@@ -43,9 +43,6 @@ RUN php -m
 # Debug database connection variables (Updated comment to invalidate cache)
 RUN echo "DB_HOST=$DB_HOST" && echo "DB_USERNAME=$DB_USERNAME" && echo "DB_PASSWORD=$DB_PASSWORD" # Updated on 2025-03-07
 
-# Test database connection
-RUN php -r "try { \$pdo = new PDO('mysql:host=$DB_HOST;port=$DB_PORT;dbname=$DB_DATABASE', '$DB_USERNAME', '$DB_PASSWORD'); echo 'Database connection successful'; } catch (PDOException \$e) { echo 'Connection failed: ' . \$e->getMessage(); exit(1); }"
-
 # Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
