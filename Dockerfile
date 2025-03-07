@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    libzip-dev \
     zip \
     unzip \
     git \
@@ -39,5 +40,5 @@ RUN php -m
 # Expose the port
 EXPOSE 80
 
-# Start PHP-FPM
+# Start the app with heroku-php-apache2
 CMD ["vendor/bin/heroku-php-apache2", "public/"]
