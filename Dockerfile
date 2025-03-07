@@ -40,17 +40,21 @@ RUN php artisan optimize
 # Optional: List PHP modules to confirm pdo_mysql is installed
 RUN php -m
 
+# Debug database connection variables
+RUN echo "DB_HOST=$DB_HOST" && echo "DB_USERNAME=$DB_USERNAME" && echo "DB_PASSWORD=$DB_PASSWORD"
+
 # Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Configure Apache to serve the Laravel public directory
-COPY ./public/.htaccess /var/www/html/.htaccess
-RUN sed -i 's!/var/www/html/public!/var/www/html!g' /etc/apache2/sites-available/000-default.conf \
-    && echo "<Directory /var/www/html>\n\
+COPY ./public/.htaccess /var/www/html/public/.htaccess
+RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
+    && echo "<Directory /var/www/html/public>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>" >> /etc/apache2/apache2.conf
+</Directory>" >> /etc/apache2/apache2.conf \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Expose the port
 EXPOSE 80
