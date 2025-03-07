@@ -1,13 +1,16 @@
 # Use the official PHP image as the base
 FROM php:8.2-fpm
 
-# Install dependencies and the pdo_mysql extension
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
+    zip \
+    unzip \
+    git \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql zip
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -30,8 +33,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
 # Optimize Laravel
 RUN php artisan optimize
 
+# Optional: List PHP modules to confirm pdo_mysql is installed
+RUN php -m
+
 # Expose the port
-EXPOSE 9000
+EXPOSE 80
 
 # Start PHP-FPM
-CMD ["php-fpm"]
+CMD ["vendor/bin/heroku-php-apache2", "public/"]
