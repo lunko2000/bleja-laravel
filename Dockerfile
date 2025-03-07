@@ -18,7 +18,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # Install heroku-php-apache2 binary
 RUN mkdir -p /app/vendor/bin && \
-    curl -L https://github.com/heroku/heroku-buildpack-php/releases/download/v208/heroku-buildpack-php-v208.tar.gz | tar xz -C /app && \
+    curl -L https://github.com/heroku/heroku-buildpack-php/releases/download/v246/heroku-buildpack-php-v246.tar.gz | tar xz -C /app && \
     mv /app/bin/heroku-php-apache2 /app/vendor/bin/heroku-php-apache2
 
 # Set working directory
