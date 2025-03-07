@@ -1,5 +1,5 @@
-# Use the official PHP image with FPM as the base
-FROM php:8.2-fpm
+# Use the official PHP image with Apache
+FROM php:8.2-apache
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
@@ -10,12 +10,10 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    apache2 \
-    libapache2-mod-php \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql zip
 
-# Enable Apache modules
+# Enable Apache mod_rewrite for Laravel routing
 RUN a2enmod rewrite
 
 # Install Composer
@@ -25,7 +23,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 WORKDIR /var/www/html
 
 # Copy application files
-COPY . .
+COPY . /var/www/html/
 
 # Install Composer dependencies
 RUN composer install --no-dev --prefer-dist
@@ -45,27 +43,17 @@ RUN php -m
 # Set permissions for Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configure Apache to serve the Laravel app
-COPY ./public/.htaccess /var/www/html/public/.htaccess
-RUN echo "<Directory /var/www/html/public>\n\
+# Configure Apache to serve the Laravel public directory
+COPY ./public/.htaccess /var/www/html/.htaccess
+RUN sed -i 's!/var/www/html/public!/var/www/html!g' /etc/apache2/sites-available/000-default.conf \
+    && echo "<Directory /var/www/html>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
-</Directory>\n\
-\n\
-<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    ServerName localhost\n\
-\n\
-    ErrorLog \${APACHE_LOG_DIR}/error.log\n\
-    CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
-</VirtualHost>" > /etc/apache2/sites-available/000-default.conf
-
-# Enable the site
-RUN a2ensite 000-default.conf
+</Directory>" >> /etc/apache2/apache2.conf
 
 # Expose the port
 EXPOSE 80
 
 # Start Apache
-CMD ["apache2ctl", "-D", "FOREGROUND"]
+CMD ["apache2-foreground"]
