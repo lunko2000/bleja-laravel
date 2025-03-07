@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     apache2 \
+    libapache2-mod-php \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql zip
 
@@ -60,8 +61,11 @@ RUN echo "<Directory /var/www/html/public>\n\
     CustomLog \${APACHE_LOG_DIR}/access.log combined\n\
 </VirtualHost>" > /etc/apache2/sites-available/000-default.conf
 
+# Enable the site
+RUN a2ensite 000-default.conf
+
 # Expose the port
 EXPOSE 80
 
-# Start Apache in the foreground
-CMD ["apache2-foreground"]
+# Start Apache
+CMD ["apache2ctl", "-D", "FOREGROUND"]
