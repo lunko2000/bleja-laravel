@@ -76,5 +76,7 @@ RUN echo "php_flag display_errors on" >> /etc/apache2/conf-enabled/error-logging
 # Expose the port
 EXPOSE 8080
 
+RUN sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
+
 # Start Apache with database check
 CMD ["sh", "-c", "php /var/www/html/check-db.php && apache2-foreground -DFOREGROUND"]
