@@ -74,7 +74,7 @@ RUN echo "php_flag display_errors on" >> /etc/apache2/conf-enabled/error-logging
     && echo "php_value error_log /proc/self/fd/2" >> /etc/apache2/conf-enabled/error-logging.conf
 
 # Expose the port
-EXPOSE 80
+EXPOSE 8080
 
 # Start Apache with database check
-CMD ["sh", "-c", "php /var/www/html/check-db.php && apache2-foreground"]
+CMD ["sh", "-c", "php /var/www/html/check-db.php && apache2-foreground -DFOREGROUND"]
