@@ -10,4 +10,7 @@
 
     # Otherwise, send everything to Laravel
     RewriteRule ^(.*)$ index.php [L]
+
+    # Ensure storage folder is linked correctly (important for images)
+    RewriteRule ^storage/(.*)$ /storage/$1 [L]
 </IfModule>
