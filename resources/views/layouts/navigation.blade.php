@@ -4,8 +4,8 @@
         <!-- Desktop Navigation -->
         <div class="hidden sm:flex sm:items-center space-x-6">
             @auth
-                <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                    Admin Dashboard
+                <x-nav-link :href="Auth::user()->role === 'admin' ? route('admin.dashboard') : route('player.dashboard')" :active="request()->routeIs('admin.dashboard') || request()->routeIs('player.dashboard')">
+                    Dashboard
                 </x-nav-link>
             @endauth
 
@@ -47,8 +47,8 @@
     <!-- Mobile Menu -->
     <div x-show="open" class="sm:hidden">
         @auth
-            <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                Admin Dashboard
+            <x-responsive-nav-link :href="Auth::user()->role === 'admin' ? route('admin.dashboard') : route('player.dashboard')" :active="request()->routeIs('admin.dashboard') || request()->routeIs('player.dashboard')">
+                Dashboard
             </x-responsive-nav-link>
         @endauth
 

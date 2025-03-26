@@ -5,9 +5,9 @@
     <h2 class="text-2xl font-bold mb-4">🎮 Player Dashboard</h2>
     <p class="mb-6">Welcome, {{ auth()->user()->username }}!</p>
 
-    <!-- Button to View Stats (Inactive for Now) -->
-    <button class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg transition cursor-not-allowed opacity-50">
-        📊 View My Stats (Coming Soon)
-    </button>
+    <!-- Button to View Stats -->
+    <a href="{{ route('player.stats') }}" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg transition">
+        📊 View My Stats
+    </a>
 </div>
 @endsection
