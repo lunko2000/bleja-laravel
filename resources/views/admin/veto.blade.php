@@ -144,27 +144,28 @@
 
 <!-- Race Details Modal -->
 <div id="raceModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
-    <div class="bg-gray-800 p-8 rounded-lg shadow-md w-[600px] text-center relative">
+    <div class="bg-gray-800 p-4 sm:p-8 rounded-lg shadow-md w-full max-w-[90vw] sm:w-[600px] text-center relative">
         <!-- Close Button -->
-        <button onclick="closeRaceModal()" class="absolute top-3 right-3 text-white text-xl hover:text-gray-400">
-            &times;
+        <button onclick="closeRaceModal()" class="absolute top-2 right-2 sm:top-3 sm:right-3 text-white text-xl hover:text-gray-400 z-10">
+            ×
         </button>
 
         <!-- Race Title -->
-        <h2 id="raceTitle" class="text-2xl font-bold text-white mb-4"></h2>
+        <h2 id="raceTitle" class="text-xl sm:text-2xl font-bold text-white mb-4"></h2>
 
         <!-- Race Images -->
-        <div class="flex justify-center items-center space-x-8">
-            <!-- Main Track Image (Fixed Size) -->
-            <div class="w-[320px] h-[180px] overflow-hidden flex items-center justify-center">
+        <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8">
+            <!-- Main Track Image (Responsive Size) -->
+            <div class="w-[280px] h-[157px] sm:w-[320px] sm:h-[180px] overflow-hidden flex items-center justify-center">
                 <img id="mainRaceImage" src="" alt="Main Race Image" class="object-contain max-w-full max-h-full">
             </div>
 
-            <!-- Divider -->
-            <div class="w-px h-40 bg-gray-500"></div>
+            <!-- Divider (Horizontal on Mobile, Vertical on Desktop) -->
+            <div class="w-full h-px bg-gray-500 sm:hidden"></div>
+            <div class="hidden sm:block w-px h-40 bg-gray-500"></div>
 
-            <!-- Track Layout (Fixed Size) -->
-            <div class="w-[220px] h-[180px] overflow-hidden flex items-center justify-center">
+            <!-- Track Layout (Responsive Size) -->
+            <div class="w-[192px] h-[157px] sm:w-[220px] sm:h-[180px] overflow-hidden flex items-center justify-center">
                 <img id="layoutRaceImage" src="" alt="Track Layout" class="object-contain max-w-full max-h-full">
             </div>
         </div>
@@ -268,18 +269,43 @@
             randomizeBtn.classList.add('bg-gray-500', 'text-gray-300', 'cursor-not-allowed');
         }
 
-        // Existing Button Selection Logic
+        // Button Selection Logic with Deselection
         const cupButtons = document.querySelectorAll('.cup-button:not(.no-hover)');
         const confirmButton = document.getElementById('confirmButton');
         const selectedCupInput = document.getElementById('selectedCupId');
+        let selectedCupId = null; // Track the currently selected cup
 
         cupButtons.forEach(button => {
             button.addEventListener('click', function () {
-                cupButtons.forEach(btn => btn.classList.remove('bg-green-500', 'text-white'));
-                this.classList.add('bg-green-500', 'text-white');
-                selectedCupInput.value = this.getAttribute('data-cup-id');
-                confirmButton.removeAttribute('disabled');
-                confirmButton.classList.add('bg-indigo-500', 'hover:bg-indigo-600', 'text-white');
+                const cupId = this.getAttribute('data-cup-id');
+
+                // If the same cup is clicked again, deselect it
+                if (selectedCupId === cupId) {
+                    selectedCupId = null;
+                    this.classList.remove('bg-green-500', 'text-white');
+                    selectedCupInput.value = '';
+                    confirmButton.disabled = true;
+                    confirmButton.classList.remove('bg-indigo-500', 'hover:bg-indigo-600', 'text-white');
+                    confirmButton.classList.add('bg-gray-500', 'text-gray-300');
+                    // Re-enable Randomize button
+                    randomizeBtn.disabled = false;
+                    randomizeBtn.classList.remove('bg-gray-500', 'text-gray-300', 'cursor-not-allowed');
+                    randomizeBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600', 'text-white');
+                } else {
+                    // Deselect any previously selected cup
+                    cupButtons.forEach(btn => btn.classList.remove('bg-green-500', 'text-white'));
+                    // Select the new cup
+                    selectedCupId = cupId;
+                    this.classList.add('bg-green-500', 'text-white');
+                    selectedCupInput.value = cupId;
+                    confirmButton.disabled = false;
+                    confirmButton.classList.remove('bg-gray-500', 'text-gray-300');
+                    confirmButton.classList.add('bg-indigo-500', 'hover:bg-indigo-600', 'text-white');
+                    // Disable Randomize button
+                    randomizeBtn.disabled = true;
+                    randomizeBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600', 'text-white');
+                    randomizeBtn.classList.add('bg-gray-500', 'text-gray-300', 'cursor-not-allowed');
+                }
             });
         });
 
@@ -374,7 +400,7 @@
             }
         }
     });
-
+    
     // Form submission handler to prevent default unless confirm button
     function handleFormSubmit(event) {
         const confirmBtn = document.getElementById('confirmButton');

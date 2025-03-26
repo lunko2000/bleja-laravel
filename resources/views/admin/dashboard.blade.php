@@ -9,7 +9,7 @@
         <p class="text-gray-400 mb-6">Welcome, Admin! Manage users and matches from here.</p>
 
         <!-- Buttons -->
-        <div class="flex flex-col sm:flex-row gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="{{ route('admin.users.create') }}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition">
                 ➕ Add New User
             </a>
